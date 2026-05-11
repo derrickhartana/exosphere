@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dampak Sampah Antariksa terhadap Jaringan Satelit Global di Eksosfer dan LEO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Montserrat:wght@700&display=swap');
+  :root{--bg-card:#D0D0D0;--text-color:#0F1937;--font-heading:'Montserrat',sans-serif;--font-body:'IBM Plex Mono',monospace;--radius:24px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{-webkit-user-select:none;user-select:none;cursor:default;height:100vh;width:100vw;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#f0f0f0;overflow:hidden;font-family:var(--font-body)}
+/* Update pada bagian .scene */
+.scene {
+  width: 580px;
+  height: 340px;
+  perspective: 1200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  will-change: opacity, transform, filter;
+  
+  /* State Awal: Transparan, Blur, dan Sedikit Mengecil */
+  opacity: 0;
+  filter: blur(15px);
+  transform: scale(0.9);
+  transition: 
+    opacity 1.2s cubic-bezier(.4, 0, .2, 1), 
+    transform 1.2s cubic-bezier(.4, 0, .2, 1), 
+    filter 1.2s cubic-bezier(.4, 0, .2, 1);
+}
+
+.credit-tag {
+  position: fixed;
+  bottom: 20px;
+  left: 20px; /* Diubah ke kiri sesuai permintaan */
+  font-family: var(--font-body); /* IBM Plex Mono */
+  font-size: 12.5px;
+  color: var(--text-color);
+  opacity: 0.4;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Class pemicu saat masuk */
+.scene.visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.scene.hidden {
+  opacity: 0;
+  transform: scale(.8);
+  pointer-events: none;
+  filter: blur(5px);
+  visibility: hidden; /* Tambahkan ini */
+  transition: opacity .6s, transform .6s, filter .6s, visibility 0s .6s; /* Delay visibility */
+}
+  .card{width:100%;height:100%;position:relative;transform-style:preserve-3d;will-change:transform}
+/* Ubah dari 1s ke 0.6s agar lebih cepat */
+.card.flipping, .photo-card.flipping {
+  transition: transform 0.1s cubic-bezier(.4, 0, .2, 1) !important;
+}
+  .face{position:absolute;width:100%;height:100%;backface-visibility:hidden;background:var(--bg-card);border-radius:var(--radius);display:flex;padding:40px;box-shadow:0 15px 45px rgba(0,0,0,.12)}
+  .front{align-items:center;gap:35px}
+  .img-box{flex:0 0 280px;height:100%;background:#000;overflow:hidden;border-radius:8px}
+  .img-box img{width:100%;height:100%;object-fit:cover}
+  .vertical-meta{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;letter-spacing:2px;color:var(--text-color);text-transform:uppercase;opacity:.6;height:100%;display:flex;justify-content:center}
+  .content-right{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .main-title{font-family:var(--font-heading);font-weight:700;font-size:28px;line-height:1.1;letter-spacing:-.05em;color:var(--text-color)}
+  .back{transform:rotateY(180deg);flex-direction:column;justify-content:center;padding:40px 60px}
+  .toc-list{display:flex;flex-direction:column;gap:5px}
+  .toc-item{display:flex;gap:15px;padding:8px 12px;border-radius:12px;font-family:var(--font-heading);font-size:20px;letter-spacing:-.05em;color:var(--text-color);align-items:center;transition:background .2s ease;cursor:pointer}
+  .toc-item:hover{background:rgba(15,25,55,.05)}
+  .toc-num{font-weight:600;opacity:.4;font-size:12px;font-family:var(--font-body)}
+  .details-container{position:absolute;top:0;left:0;width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;gap:40px;opacity:0;transform:translateY(30px);pointer-events:none;filter:blur(5px);perspective:1200px;transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.4,0,.2,1),filter .6s cubic-bezier(.4,0,.2,1)}
+ .details-container.active {
+  display: flex; /* Aktifkan flex saat dipanggil */
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  filter: none;
+}
+  .photo-card{width:350px;height:450px;position:relative;transform-style:preserve-3d;cursor:pointer;will-change:transform}
+  .photo-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius);overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+  .photo-front{background:#000}
+  .photo-front img{width:100%;height:100%;object-fit:cover}
+  .photo-back{background:var(--bg-card);transform:rotateY(180deg);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;text-align:center;border:1px solid rgba(0,0,0,.05)}
+  .photo-back h3{font-family:var(--font-heading);font-size:24px;color:var(--text-color);margin:0 0 15px}
+  .photo-back p{font-family:var(--font-body);font-size:13px;color:var(--text-color);line-height:1.6;opacity:.8}
+  .home-btn{position:absolute;top:20px;right:20px;background:none;color:var(--text-color);border:1.5px solid var(--text-color);width:80px;height:36px;border-radius:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s ease;opacity:.6;z-index:100;font-family:var(--font-body);font-size:12px;font-weight:600}
+  .home-btn:hover{opacity:1;background:var(--text-color);color:#fff}
+</style>
+</head>
+<body>
+<div class="scene" id="scene">
+  <div class="card" id="card">
+    <div class="face front">
+      <div class="img-box"><img src="card-start.png" alt="Cover"></div>
+      <div class="vertical-meta">Derrick Karlson Hartana • X A 25/26</div>
+      <div class="content-right">
+        <h1 class="main-title">Dampak<br>Sampah<br>Antariksa<br>terhadap<br>Jaringan<br>Satelit<br>Global di<br>Eksosfer<br>dan LEO</h1>
+      </div>
+    </div>
+    <div class="face back">
+      <div class="toc-list">
+        <div class="toc-item" onclick="showPhotos(1)"><span class="toc-num">01</span><span>Abstrak</span></div>
+        <div class="toc-item" onclick="showPhotos(2)"><span class="toc-num">02</span><span>Latar Belakang</span></div>
+        <div class="toc-item" onclick="showPhotos(3)"><span class="toc-num">03</span><span>Teori Singkat</span></div>
+        <div class="toc-item" onclick="showPhotos(4)"><span class="toc-num">04</span><span>Metode Penelitian</span></div>
+        <div class="toc-item" onclick="showPhotos(5)"><span class="toc-num">05</span><span>Hasil &amp; Bahasan</span></div>
+        <div class="toc-item" onclick="showPhotos(6)"><span class="toc-num">06</span><span>Kesimpulan</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="details-container" id="details">
+  <div class="photo-card" id="pc1" data-flipped="false" onclick="toggleSingleFlip(this)">
+    <div class="photo-face photo-front"><img id="photo1" src="detail-1a.png" alt="Detail 1"></div>
+    <div class="photo-face photo-back"><h3 id="heading1">Heading</h3><p id="text1">Description</p></div>
+  </div>
+  <div class="photo-card" id="pc2" data-flipped="false" onclick="toggleSingleFlip(this)">
+    <div class="photo-face photo-front"><img id="photo2" src="detail-1b.png" alt="Detail 2"></div>
+    <div class="photo-face photo-back"><h3 id="heading2">Heading</h3><p id="text2">Description</p></div>
+  </div>
+</div>
+<button class="home-btn" onclick="goHome(event)"><span id="btnText">Home</span></button>
+<div class="credit-tag">from derrickhartana.github.io</div>
+<script>
+  // Tambahkan ini di bagian paling bawah script
+window.addEventListener('load', () => {
+  const scene = document.getElementById('scene');
+  // Gunakan requestAnimationFrame agar browser benar-benar siap sebelum transisi dimulai
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scene.classList.add('visible');
+    });
+  });
+});
+  const card = document.getElementById('card');
+  const scene = document.getElementById('scene');
+  const details = document.getElementById('details');
+  const photoCards = [document.getElementById('pc1'), document.getElementById('pc2')];
+  const btnText = document.getElementById('btnText');
+const contentData = {
+    1: {
+      titleA: 'Abstrak', 
+      descA: 'Kajian dampak penumpukan sampah antariksa di LEO yang mengancam stabilitas jaringan satelit global.', 
+      imgA: 'photos/abstrak-kiri.png',
+      titleB: 'Kata Kunci', 
+      descB: 'Sampah Antariksa, Kessler Syndrome, LEO, Eksosfer, Satelit Global.', 
+      imgB: 'photos/abstrak-kanan.png'
+    },
+    2: {
+      titleA: 'Latar Belakang', 
+      descA: 'Pertumbuhan populasi satelit di LEO menciptakan kemacetan orbit yang meningkatkan risiko tabrakan katastrofik.', 
+      imgA: 'photos/latar-kiri.png',
+      titleB: 'Urgensi', 
+      descB: 'Sampah seukuran kelereng memiliki energi hantam setara peluru rifle, mengancam 8.000 jaringan satelit aktif.', 
+      imgB: 'photos/latar-kanan.png'
+    },
+    3: {
+      titleA: 'Hukum Orbit', 
+      descA: 'Sampah di LEO melaju hingga kecepatan ~28.000 km/jam, memberikan daya hancur luar biasa pada objek fungsional.', 
+      imgA: 'photos/teori-kiri.png',
+      titleB: 'Efek Kessler', 
+      descB: 'Teori reaksi berantai di mana fragmen tabrakan menciptakan puing baru hingga orbit tidak bisa lagi digunakan.', 
+      imgB: 'photos/teori-kanan.png'
+    },
+    4: {
+      titleA: 'Metodologi', 
+      descA: 'Penelitian kualitatif dan kuantitatif berbasis studi literatur dari data NASA, ESA, dan laporan ilmiah internasional.', 
+      imgA: 'photos/metode-kiri.png',
+      titleB: 'Fokus Data', 
+      descB: 'Analisis data populasi satelit Starlink (65% populasi LEO) dan insiden historis seperti Iridium-Cosmos.', 
+      imgB: 'photos/metode-kanan.png'
+    },
+    5: {
+      titleA: 'Analisis Dampak', 
+      descA: 'Potensi kelumpuhan total pada sistem navigasi (GPS), perbankan global, dan komunikasi internet jika orbit LEO hancur.', 
+      imgA: 'photos/hasil-kiri.png',
+      titleB: 'Risiko Regional', 
+      descB: 'Letak Indonesia di khatulistiwa meningkatkan risiko kejatuhan puing dari orbit geostasioner (GSO).', 
+      imgB: 'photos/hasil-kanan.png'
+    },
+    6: {
+      titleA: 'Solusi Mitigasi', 
+      descA: 'Implementasi teknologi aktif seperti RemoveDEBRIS (jaring) dan ClearSpace-1 (penangkapan puing VESPA).', 
+      imgA: 'photos/kesimpulan-kiri.png',
+      titleB: 'Rekomendasi', 
+      descB: 'Perlunya regulasi deorbitasi mandiri yang disiplin dan penguatan sistem Space Situational Awareness.', 
+      imgB: 'photos/kesimpulan-kanan.png'
+    }
+  };
+
+  let isFlipped = false, isAnimating = false, inDetailView = false;
+  let targetRX = 0, targetRY = 0, currentRX = 0, currentRY = 0;
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  function applyTilts() {
+    currentRX = lerp(currentRX, targetRX, 0.08);
+    currentRY = lerp(currentRY, targetRY, 0.08);
+    if (!inDetailView) {
+      card.style.transform = `rotateX(${currentRX}deg) rotateY(${isFlipped ? currentRY + 180 : currentRY}deg)`;
+    } else {
+      photoCards.forEach(pc => {
+        const f = pc.getAttribute('data-flipped') === 'true';
+        pc.style.transform = `rotateX(${currentRX}deg) rotateY(${f ? currentRY + 180 : currentRY}deg)`;
+      });
+    }
+    requestAnimationFrame(applyTilts);
+  }
+  requestAnimationFrame(applyTilts);
+
+// Variabel untuk mengecek apakah sedang hover
+  let isHovering = false;
+
+  window.addEventListener('mousemove', e => {
+    if (isAnimating) return;
+    
+    // Cari elemen mana yang sedang dihover (scene atau details)
+    const targetEl = inDetailView ? details : scene;
+    const rect = targetEl.getBoundingClientRect();
+    
+    // Cek apakah mouse berada di dalam area elemen tersebut
+    const inside = (
+      e.clientX >= rect.left && e.clientX <= rect.right &&
+      e.clientY >= rect.top && e.clientY <= rect.bottom
+    );
+
+    if (inside) {
+      const divisor = inDetailView ? 25 : 20;
+      targetRX = (e.clientY - rect.top - rect.height / 2) / divisor;
+      targetRY = (rect.width / 2 - (e.clientX - rect.left)) / divisor;
+    } else {
+      resetTilt();
+    }
+  });
+
+  const resetTilt = () => { targetRX = 0; targetRY = 0; };
+  scene.addEventListener('mouseleave', () => { if (!inDetailView) resetTilt(); });
+  details.addEventListener('mouseleave', () => { if (inDetailView) resetTilt(); });
+
+  scene.addEventListener('click', e => {
+    if (isAnimating || inDetailView || e.target.closest('.toc-item')) return;
+    toggleFlip();
+  });
+
+  function toggleFlip() {
+    isAnimating = true;
+    isFlipped = !isFlipped;
+    card.classList.add('flipping');
+    card.style.transition = 'transform 1s cubic-bezier(.4,0,.2,1)';
+    card.style.transform = `rotateY(${isFlipped ? 180 : 0}deg)`;
+    setTimeout(() => { card.classList.remove('flipping'); card.style.transition = ''; isAnimating = false; }, 1000);
+  }
+
+  function toggleSingleFlip(el) {
+    if (isAnimating) return;
+    isAnimating = true;
+    const next = el.getAttribute('data-flipped') !== 'true';
+    el.setAttribute('data-flipped', next);
+    el.classList.add('flipping');
+    el.style.transform = `rotateY(${next ? 180 : 0}deg)`;
+    setTimeout(() => { el.classList.remove('flipping'); isAnimating = false; }, 1000);
+  }
+
+function showPhotos(id) {
+    if (isAnimating) return;
+    isAnimating = true; // Kunci animasi agar tidak bentrok
+    inDetailView = true;
+
+    // STEP 1: Fade out Main Card (Scene)
+    scene.classList.add('hidden');
+
+    // Tunggu durasi transisi CSS (600ms) selesai
+    setTimeout(() => {
+        // STEP 2: Update Data saat scene sudah tidak terlihat
+        const d = contentData[id];
+        
+        document.getElementById('photo1').src = d.imgA;
+        document.getElementById('heading1').textContent = d.titleA;
+        document.getElementById('text1').textContent = d.descA;
+
+        document.getElementById('photo2').src = d.imgB;
+        document.getElementById('heading2').textContent = d.titleB;
+        document.getElementById('text2').textContent = d.descB;
+
+        // Reset flip state photo cards
+        photoCards.forEach(pc => { 
+            pc.setAttribute('data-flipped','false'); 
+            pc.style.transform = 'rotateY(0deg)'; 
+        });
+
+        // STEP 3: Tampilkan Details Container
+        details.style.display = 'flex'; // Pastikan display aktif dulu
+        
+        // Trigger reflow untuk animasi fade in
+        void details.offsetWidth; 
+
+        details.classList.add('active');
+        btnText.textContent = 'Back';
+        resetTilt();
+
+        // Unlock animasi setelah detail muncul (600ms)
+        setTimeout(() => { isAnimating = false; }, 600);
+    }, 600); // 600ms sesuai durasi transisi CSS .scene.hidden
+}
+
+function goHome(e) {
+    e.stopPropagation();
+    if (isAnimating) return;
+    
+    if (inDetailView) {
+        isAnimating = true;
+
+        // STEP 1: Fade out Details
+        details.classList.remove('active');
+
+        setTimeout(() => {
+            // STEP 2: Sembunyikan detail & Munculkan Scene
+            details.style.display = 'none';
+            scene.classList.remove('hidden');
+            
+            inDetailView = false;
+            btnText.textContent = 'Home';
+            resetTilt();
+
+            // Unlock animasi setelah scene muncul
+            setTimeout(() => { isAnimating = false; }, 600);
+        }, 600); // Sesuai durasi .details-container transition
+    } else if (isFlipped) {
+        toggleFlip();
+    }
+}
+</script>
+</body>
+</html>
